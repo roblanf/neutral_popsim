@@ -15,6 +15,21 @@
 #own licenses and conditions, using PartitionFinder implies that you
 #agree with those licences and conditions as well.
 
+'''This little script is a population genetics simulation of a single locus
+    populations start as a list of zeros, and a single iteration ends when the population 
+    is fixed for 1's. The idea is to flexibly simulate overlapping generations and 
+    fluctuating population size.
+    
+    Parameters:
+        S   -   probability that an individual survives a given timestep
+                S=0.0 is non-overlapping generations
+        N   -   a list of population sizes to switch between 
+        pN  -   probability (per timestep) of switching to a new population size from N
+        u   -   mutation rate from 0->1. NB this should be <<1/Ne
+    
+'''
+
+
 import numpy as np
 uniform = np.random.uniform
 import random 
