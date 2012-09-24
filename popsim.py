@@ -25,8 +25,7 @@
                 S=0.0 is non-overlapping generations
         N   -   a list of population sizes to switch between 
         pN  -   probability (per timestep) of switching to a new population size from N
-        u   -   mutation rate from 0->1. NB this should be <<1/Ne
-    
+        u   -   mutation rate from 0->1. NB this should be <<1/Ne    
 '''
 
 
@@ -39,7 +38,6 @@ S = 0.0         #survival probability per generation. 0.0 is non-overlapping gen
 N = [1]        #list of population sizes
 pN = 0.0        #probability of changing popn size each generation (just choose a new popsize from the list)
 R = 1000       #number of reps
-T = -1          #time to run simulation, if -1, it goes until a termination step is reached
 u = 0.00001   #mutation rate from 0->1. NB this should be <<1/Ne
 
 def get_start_pop(n):
@@ -116,17 +114,10 @@ def run_pop(pop):
         #print "1s = ", pop.count(1)
         
         #test termination conditions
-        if gen==T:
-            #print "TIMED OUT"
-            break
         zeros = pop.count(0)
         if pop.count(0)==0:     #fixed for 1
             #print "FIXED FOR ONES"
             break
-        #if pop.count(0)==n:      #fixed for 0
-            #print "FIXED FOR ZEROS"
-            #break
-            
             
         #if we didn't terminate, update pop size, and generations
         if uniform()<pN:
