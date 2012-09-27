@@ -10,10 +10,7 @@
 #MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 #General Public License for more details. You should have received a copy
 #of the GNU General Public License along with this program.  If not, see
-#<http://www.gnu.org/licenses/>. PartitionFinder also includes the PhyML
-#program and the PyParsing library both of which are protected by their
-#own licenses and conditions, using PartitionFinder implies that you
-#agree with those licences and conditions as well.
+#<http://www.gnu.org/licenses/>. 
 
 '''This little script is a population genetics simulation of a single locus
     populations start as a list of zeros, and a single iteration ends when the population 
@@ -21,31 +18,31 @@
     fluctuating population size.
     
     Parameters:
-        S   -   probability that an individual survives a given timestep
+        Ss   -   a list of probabilities that an individual survives a given timestep
                 S=0.0 is non-overlapping generations
-        N   -   a list of population sizes to switch between 
-        pN  -   probability (per timestep) of switching to a new population size from N
-        u   -   mutation rate from 0->1. NB this should be <<1/Ne    
+        N   -   a list of lists of population sizes to switch between 
+        pNs  - a list of  probabilities (per timestep) of switching to a new population size from N
+        us  -   a list of mutation rates from 0->1. NB this should be <<1/Ne    
 '''
+
+#TODO allow parameters to be set as lists, so that one can do grid searches easily.
+#or just use range()
 
 
 import numpy as np
 uniform = np.random.uniform
 import random 
+from itertools import product
 
 
-S = 0.0         #survival probability per generation. 0.0 is non-overlapping generations
-N = [1]        #list of population sizes
-pN = 0.0        #probability of changing popn size each generation (just choose a new popsize from the list)
-R = 1000       #number of reps
-u = 0.00001   #mutation rate from 0->1. NB this should be <<1/Ne
+Ss = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]     #survival probability per generation. 0.0 is non-overlapping generations
+Ns = [[100, 200]]                                           #list of population sizes
+pNs = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,  0.8, 0.9, 1.0]                        #probability of changing popn size each generation (just choose a new popsize from the list)
+us = [0.0005, 0.001]                   #mutation rate from 0->1. NB this should be <<1/Ne
+R = 10                                                     #number of reps
+outfilename = "results.txt"
 
-def get_start_pop(n):
-    pop = [0]*n         #population of zeros
-    pop[0] = 1          #a new mutant at the first pos.
-    return pop
-
-def new_popsize(n):
+def new_popsize(n, N):
     '''Choose a new population size from N, that isn't the same as n
     '''
     n_index = N.index(n)
@@ -54,22 +51,15 @@ def new_popsize(n):
     n_new = random.choice(N_copy)
     return n_new
 
-def mutate(population):
-    '''Add mutations to a population
-        NB, we only mutate from 0 to 1
-        And, there's probably a much smarter way to do this, e.g. draw the number of muts
-        from a poisson distribution then apply them. This one is computationally VERY 
-        expensive
+def mutate(population, u):
+    '''Add mutations to a population. NB, we only mutate from 0 to 1
     '''
-
     for i in range(len(population)):
         if population[i] == 0 and uniform()<u: 
             population[i] = 1
-            #print "MUTANT"
-    
     return population
     
-def update_one_gen(pop, n):
+def update_one_gen(pop, n, S, u):
     '''Take a list of 0s and 1s that represents a population
         - kill stuff off according to S
         - then grow or shrink the population to make it equal n
@@ -91,68 +81,64 @@ def update_one_gen(pop, n):
         if uniform()>S:
             pop.pop(i) #pop.pop(), haha
 
-
     #3. now add new offspring from the original parents 
     diff = len(pop)-n
     if diff<0: #our current pop is smaller than we want, so grow it
         newborns = []
         for i in range(-1*diff):
             newborns.append(random.choice(original_pop)) #we sample the newborns from the original list of parents
-
-        newborns = mutate(newborns) #newborns might mutate...
+        newborns = mutate(newborns, u) #newborns might mutate...
         pop = pop+newborns
-
     return pop
 
-def run_pop(pop):
+def run_pop(pop, S, N, pN, u):
     ''' run a population until we hit a termination condition'''
     gen = 0
     n = len(pop)
     while True:
-        #print pop, n
-        pop = update_one_gen(pop, n)
-        #print "1s = ", pop.count(1)
+        pop = update_one_gen(pop, n, S, u)
         
         #test termination conditions
         zeros = pop.count(0)
         if pop.count(0)==0:     #fixed for 1
-            #print "FIXED FOR ONES"
             break
             
         #if we didn't terminate, update pop size, and generations
         if uniform()<pN:
-            #print "CHANGING POPSIZE"
-            n = new_popsize(n)       
+            n = new_popsize(n, N)
         gen += 1
     
     return pop, gen
 
+outfile = open(outfilename, "w")
+header =  "S\tN\tpN\tR\tu\tfix_times\tmean_fix\tstd_fix\tk"
+outfile.write(header)
+outfile.close()
+print header
 
-fixation_rates = []
-extinction_rates = []
-for i in range(R):
-    if i%10 == 0: print i
-
-    start_n = N[0] #start with the first population size in the list
+for params in product(Ss, Ns, pNs, us):
+    S = params[0]
+    N = params[1]
+    pN = params[2]
+    u = params[3]
     
-    #start with a population with 1 mutant in it
-    #pop = get_start_pop(start_n)
-    print "********* NEW RUN %d *************" %i
+    fixation_rates = []
+    for i in range(R):
+        #if i%10 == 0: print i
     
-    #start with all zeros
-    pop = [0]*start_n
-    
-    #keep updating until we reach T, or until we fix for one allele
-    pop, gen = run_pop(pop)    
-    
-    if pop.count(1)==len(pop): #fixed for 1's
-        fixation_rates.append(gen)
-    else:
-        extinction_rates.append(gen)
-    
-    
-
-print fixation_rates
-
-print "S\tN\tpN\tR\tu\tfix_times\tmean_fix\tstd_fix\n"
-print S, "\t", N, "\t", pN, "\t", R, "\t", u, "\t", fixation_rates, "\t", np.mean(fixation_rates), "\t", np.std(fixation_rates)
+        start_n = N[0] #start with the first population size in the list
+            
+        #start with all zeros
+        pop = [0]*start_n
+        
+        #keep updating until we reach T, or until we fix for one allele
+        pop, gen = run_pop(pop, S, N, pN, u)    
+        
+        if pop.count(1)==len(pop): #fixed for 1's
+            fixation_rates.append(gen)
+            
+    result = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t" %(str(S), str(N), str(pN), str(R), str(u), str(fixation_rates), str(np.mean(fixation_rates)), str(np.std(fixation_rates)), str(1.0/np.mean(fixation_rates)))
+    print result
+    outfile = open(outfilename, "a")
+    outfile.write(result)
+    outfile.close()
