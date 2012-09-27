@@ -111,7 +111,7 @@ def run_pop(pop, S, N, pN, u):
     return pop, gen
 
 outfile = open(outfilename, "w")
-header =  "S\tN\tpN\tR\tu\tfix_times\tmean_fix\tstd_fix\tk"
+header =  "S\tN\tpN\tR\tu\tfix_times\tmean_fix\tstd_fix\tk\n"
 outfile.write(header)
 outfile.close()
 print header
@@ -137,7 +137,7 @@ for params in product(Ss, Ns, pNs, us):
         if pop.count(1)==len(pop): #fixed for 1's
             fixation_rates.append(gen)
             
-    result = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t" %(str(S), str(N), str(pN), str(R), str(u), str(fixation_rates), str(np.mean(fixation_rates)), str(np.std(fixation_rates)), str(1.0/np.mean(fixation_rates)))
+    result = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" %(str(S), str(N), str(pN), str(R), str(u), str(fixation_rates), str(np.mean(fixation_rates)), str(np.std(fixation_rates)), str(1.0/np.mean(fixation_rates)))
     print result
     outfile = open(outfilename, "a")
     outfile.write(result)
