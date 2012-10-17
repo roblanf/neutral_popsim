@@ -38,16 +38,23 @@ from itertools import product
 Ss = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]     #survival probability per generation. 0.0 is non-overlapping generations
 Ns = [[100, 200]]                                           #list of population sizes
 pNs = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,  0.8, 0.9, 1.0]                        #probability of changing popn size each generation (just choose a new popsize from the list)
-us = [0.0005, 0.001]                   #mutation rate from 0->1. NB this should be <<1/Ne
-R = 10                                                     #number of reps
+us = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]                   #mutation rate from 0->1. NB this should be <<1/Ne
+R = 10000                                                     #number of reps
 outfilename = "results.txt"
 
 def new_popsize(n, N):
-    '''Choose a new population size from N, that isn't the same as n
+    '''Choose a new population size
+        N is just a list of possible population sizes, it could be of any length
+        This function works by picking a new population size value from N
+        and making sure that it's different from the current population size (n)
     '''
+    #get the position of the current population size in the list of possible sizes
     n_index = N.index(n)
+    #make a copy of the list of population sizes
     N_copy = list(N)    
+    #and remove the current population size from it
     N_copy.pop(n_index)
+    #now pick the new population size by randomly picking from the remaining sizes.
     n_new = random.choice(N_copy)
     return n_new
 
@@ -124,7 +131,7 @@ for params in product(Ss, Ns, pNs, us):
     
     fixation_rates = []
     for i in range(R):
-        #if i%10 == 0: print i
+        if i%100 == 0: print i
     
         start_n = N[0] #start with the first population size in the list
             
