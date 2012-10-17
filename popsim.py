@@ -92,8 +92,8 @@ def update_one_gen(pop, n, S, u):
     #2. copy the parental population, so we can add offspring later
     original_pop = list(pop)
 
-    #3. Now randomly kill some of the parents
-    number_to_kill = poisson(S*len(pop))
+    #3. Now randomly kill some fixed proportion of the parents
+    number_to_kill = int(round((1-S)*len(pop)))
     random.shuffle(pop)
     pop = pop[number_to_kill:]
 
