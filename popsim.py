@@ -93,11 +93,9 @@ def update_one_gen(pop, n, S, u):
     original_pop = list(pop)
 
     #3. Now randomly kill some of the parents
-    ordering = range(len(pop))
-    ordering.reverse()
-    for i in ordering:    
-        if uniform()>S:
-            pop.pop(i) #pop.pop(), haha
+    number_to_kill = poisson(S*len(pop))
+    random.shuffle(pop)
+    pop = pop[number_to_kill:]
 
     #3. now add new offspring from the original parents 
     diff = len(pop)-n
