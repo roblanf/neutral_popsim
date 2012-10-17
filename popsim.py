@@ -31,12 +31,13 @@
 
 import numpy as np
 uniform = np.random.uniform
+poisson = np.random.poisson
 import random 
 from itertools import product
 
 
 Ss = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]     #survival probability per generation. 0.0 is non-overlapping generations
-Ns = [[100, 200]]                                           #list of population sizes
+Ns = [[10, 20]]                                           #list of population sizes
 pNs = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,  0.8, 0.9, 1.0]                        #probability of changing popn size each generation (just choose a new popsize from the list)
 us = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]                   #mutation rate from 0->1. NB this should be <<1/Ne
 R = 10000                                                     #number of reps
@@ -61,9 +62,19 @@ def new_popsize(n, N):
 def mutate(population, u):
     '''Add mutations to a population. NB, we only mutate from 0 to 1
     '''
-    for i in range(len(population)):
-        if population[i] == 0 and uniform()<u: 
-            population[i] = 1
+    #first we figure out how many mutants we're going to generate
+    num_mutants = poisson(u*len(population))
+    
+    #now we mutate some of the population
+    #we allow for multiple hits here - we might choose a 1 and mutate to 1, but that's OK
+    #but we don't allow for the same individual to get hit twice in one generation
+    indices = range(len(population))
+    random.shuffle(indices)
+    mutate = indices[0:num_mutants]
+
+    for i in mutate:
+        population[i] = 1
+
     return population
     
 def update_one_gen(pop, n, S, u):
